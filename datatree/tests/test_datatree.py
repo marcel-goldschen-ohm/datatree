@@ -729,3 +729,14 @@ class TestSubset:
         )
         elders = simpsons.filter(lambda node: node["age"] > 18)
         dtt.assert_identical(elders, expected)
+
+
+
+def test_namechange():
+    root = DataTree(name='root')
+    child = DataTree(name='child', parent=root)
+    grandchild = DataTree(name='grandchild', parent=child)
+
+    child.name = 'childish'
+    assert (list(root.children)[0] == child.name)
+    dtt.assert_identical(root[child.name], child)

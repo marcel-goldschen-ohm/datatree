@@ -151,6 +151,9 @@ class TreeNode(Generic[Tree]):
             ), "Tree is corrupt."
             parentchildren[child_name] = self
             self._parent = parent
+            # It is a bit annoying that name is stored in two places,
+            # within the node and as a key in the parent's children.
+            self._name = child_name
             self._post_attach(parent)
         else:
             self._parent = None
@@ -596,11 +599,26 @@ class NamedNode(TreeNode, Generic[Tree]):
 
     @name.setter
     def name(self, name: str | None) -> None:
+        if name == self._name:
+            # nothing to do
+            return
+        if name is None:
+            if self._parent is not None:
+                raise ValueError("cannot set name of node with a parent to None")
         if name is not None:
             if not isinstance(name, str):
                 raise TypeError("node name must be a string or None")
             if "/" in name:
                 raise ValueError("node names cannot contain forward slashes")
+        if self._parent is not None:
+            if name in self._parent._children:
+                raise ValueError("sibling node with this name already exists")
+        #     # Update the parent's children ordered dict to reflect the new name
+        #     # keeping the order of the children the same.
+        #     # Directly mutate _children to avoid calling the setter
+        #     # which performs a bunch of unnecessary checks and tree re-arranging.
+            self._parent._children = OrderedDict([(name, v) if k == self._name else (k, v) for k, v in self.parent._children.items()])
+        #     pass
         self._name = name
 
     def __str__(self) -> str:
